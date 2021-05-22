@@ -1,0 +1,3 @@
+class Data:
+
+    nh = None

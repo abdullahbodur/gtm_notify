@@ -1,11 +1,18 @@
+from typing import Mapping
 from .notifications import NotificationHandler
 from .insta import Insta
+from .logger import Logger
+from .data import Data
 
 
 class Notify:
-    def __init__(self, username: str, password: str, logger):
+    def __init__(self, username: str, password: str):
         self.notification = NotificationHandler()
-        self.insta = Insta(username, password, logger)
+        self.insta = Insta(username, password)
+
+        Data.nh = self.notification
+
+        self.logger = Logger("notification")
 
     def send_notification(self, message):
         self.notification.send_notification(message)
