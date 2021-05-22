@@ -1,6 +1,6 @@
 # GTM Notify
 
-** Notify everthing to be informed **
+**Notify everthing to be informed**
 
 ## What is the GTM Notify?
 
