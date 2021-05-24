@@ -7,7 +7,7 @@ import apprise
 
 class NotificationHandler:
     def __init__(self, enabled=True):
-
+        
         if enabled and path.exists(C.APPRISE_CONFIG_PATH):
             self.app = apprise.Apprise()
             config = apprise.AppriseConfig()

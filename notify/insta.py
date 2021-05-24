@@ -1,8 +1,11 @@
-from instabot import Bot
+# from instabot import Bot
+from instagrapi import Client
+from instagrapi.exceptions import ClientError, PhotoNotUpload
+from os import path, getcwd
+
 from .data import Data
 import traceback
 import time
-from os import remove, path, getcwd
 
 
 jsn = "gtmtrade_uuid_and_cookie.json"
@@ -12,23 +15,26 @@ insta_conf_path = f"{path.abspath(getcwd())}/gtm_notify/notify/config/instabot_c
 
 class Insta:
     def __init__(self, username: str, password: str):
-        # creating an instance bot api
-        self.bot = Bot(base_path=insta_conf_path)
 
-        if path.exists(insta_conf_path + jsn):
-            remove(insta_conf_path + jsn)
+        self.client = Client()
 
         while True:
             try:
-                self.bot.login(username=username, password=password)
+                self.client.login(username, password)
+
+                print(f"Instagram : Login is Successfuly : {self.client.user_id}")
+
                 break
+
+            except ClientError as e:
+                Data.logger.info(e)
+
             except Exception:
                 exc = traceback.format_exc()
                 Data.logger.error(exc)
                 time.sleep(1)
-                pass
 
-    def upload_post(self, path, description):
+    def upload_post(self, paths, description):
         """
         it uploads photo as a post to instagram.
 
@@ -39,14 +45,21 @@ class Insta:
         @return :
             - None
         """
-        try:
-            with open(path) as img:
-                self.bot.upload_photo(img, caption=description)
 
-        except FileNotFoundError:
-            Data.logger.info(f"File Not Found {path} ")
+        for i in range(5):
+            try:
+                if len(paths) > 1:
+                    self.client.album_upload(paths, caption=description)
+                if len(paths) == 1:
+                    self.client.photo_upload(paths[0], caption=description)
 
-    def upload_story(self, path):
+                break
+            except Exception:
+                exc = traceback.format_exc()
+                Data.logger.error(exc)
+                time.sleep(1)
+
+    def upload_story(self, path: str):
         """
         it uploads photo as a story to instagram.
 
@@ -57,9 +70,18 @@ class Insta:
             - None
         """
 
-        try:
-            with open(path) as img:
-                self.bot.upload_story_photo(img)
+        if path != "":
+            while True:
 
-        except FileNotFoundError:
-            Data.logger.info(f"File Not Found {path} ")
+                try:
+                    self.client.photo_upload_to_story(path)
+                    break
+
+                except PhotoNotUpload as e:
+                    Data.logger.info(f"Photo Not Upload {e}")
+                    time.sleep(1)
+
+                except Exception:
+                    exc = traceback.format_exc()
+                    Data.logger.error(exc)
+                    break

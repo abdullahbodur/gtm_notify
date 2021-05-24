@@ -1,12 +1,12 @@
+import traceback
 from PIL import Image, ImageFont, ImageDraw
 from .config.asset_conf import AssetConfig as C
-from datetime import  datetime
+from datetime import datetime
 
+
+from .data import Data
 
 class ImageConv:
-    def __init__(self) -> None:
-        pass
-
     def _draw(self, texts: list, image: str, out_image: str, font, color: str):
         """
         it writes given text on image and saves edited image.
@@ -31,8 +31,8 @@ class ImageConv:
                 p = t["position"]
 
                 draw.text(p, text, color, font)
-
-            img.save(C.OUT_PATH + out_image + ".png")
+            rgb_im = img.convert("RGB")
+            rgb_im.save(C.OUT_PATH + out_image + ".jpg")
 
     def generate_trading_image(self, trades: list):
         """
@@ -59,31 +59,57 @@ class ImageConv:
 
         date = datetime.date(datetime.now())
 
-        for trade in trades:
+        images = []
 
-            texts.append({"position": None, "text": trade["coin"]["name"]})
-            texts.append({"position": None, "text": str(trade["buy_price"])})
-            texts.append({"position": None, "text": str(trade["sell_price"])})
-            texts.append({"position": None, "text": str(trade["profit"]) + "%"})
+        for _id in trades:
 
-            size = len(texts)
+            try:
+                trade = trades[_id]
+                texts.append({"position": None, "text": trade.coin})
+                texts.append({"position": None, "text": str(trade.buy_price)})
+                texts.append({"position": None, "text": str(trade.sell_price)})
+                texts.append(
+                    {"position": None, "text": self._handle_profit(trade.profit)}
+                )
 
-            for i in range(4):
+                size = len(texts)
 
-                w, h = font.getsize(texts[i]["text"])
+                for i in range(4):
 
-                x = grid * i + (grid - w) / 2
+                    w, h = font.getsize(texts[i]["text"])
 
-                texts[size - 4 + i]["position"] = (x, y)
+                    x = grid * i + (grid - w) / 2
 
-            y += 60
+                    texts[size - 4 + i]["position"] = (x, y)
 
-            if y >= 900:
-                self._draw(texts, "daily", f"{date}_{pi}", font, C.WHITE)
+                y += 60
 
-                y = 320
-                texts = []
-                pi += 1
+                if y >= 900:
+                    img_name = f"{date}_{pi}"
+
+                    images.append(C.OUT_PATH + img_name + ".jpg")
+
+                    self._draw(texts, "daily", img_name, font, C.WHITE)
+
+                    y = 320
+                    texts = []
+                    pi += 1
+            except Exception:
+                exc = traceback.format_exc()
+                Data.logger.error(exc)
+                continue
 
         if len(texts) > 0:
-            self._draw(texts, "daily", f"{date}_{pi}", font, C.WHITE)
+
+            img_name = f"{date}_{pi}"
+
+            images.append(C.OUT_PATH + img_name + ".jpg")
+            self._draw(texts, "daily", img_name, font, C.WHITE)
+
+        return images
+
+    def _handle_profit(self, profit):
+
+        profit = "{:.2f}%".format(profit)
+
+        return profit if "-" in profit else ("+" + profit)
