@@ -1,4 +1,4 @@
 apprise == 0.9.1
 PyYAML == 5.4.1
-instabot == 0.117.0
+instagrapi  ==1.7.5
 PIL == 8.0.1
