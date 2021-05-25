@@ -22,7 +22,7 @@ class Insta:
             try:
                 self.client.login(username, password)
 
-                print(f"Instagram : Login is Successfuly : {self.client.user_id}")
+                Data.logger.info(f"Instagram : Login is Successfuly : {self.client.user_id}")
 
                 break
 
